@@ -39,15 +39,15 @@
                     </div>
                     <div class="mb-3">
                         <label for="nombre" class="form-label">Nombre</label>
-                        <input type="text" class="form-control" id="nombre" required>
+                        <input type="text" class="form-control" id="nombre" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" >
                     </div>
                     <div class="mb-3">
                         <label for="apellido" class="form-label">Apellido</label>
-                        <input type="text" class="form-control" id="apellido" required>
+                        <input type="text" class="form-control" id="apellido" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+">
                     </div>
                     <div class="mb-3">
                       <label for="estado" class="form-label">Estado</label>
-                      <input type="text" class="form-control" id="estado" required>
+                      <input type="text" class="form-control" id="estado" required pattern="[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+" >
                   </div>
                     <button type="submit" class="btn btn-primary">Guardar</button>
                 </form>

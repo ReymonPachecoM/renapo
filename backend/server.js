@@ -4,9 +4,19 @@ const path = require('path');
 const cors = require('cors');
 const app = express();
 
-// Configuración básica
+// Configuración mejorada
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: ['http://127.0.0.1:8080', 'http://localhost:8080'],
+  methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Middleware para log de requests
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
 // Base de datos
 const DB_PATH = path.join(__dirname, 'db.json');
@@ -35,36 +45,111 @@ const writeDB = (data) => {
   }
 };
 
-// Validación CURP simplificada
+// Validaciones mejoradas
 const isValidCURP = (curp) => {
-  return curp && curp.length === 18;
+  return /^[A-Z]{4}\d{6}[A-Z0-9]{8}$/.test(curp);
+};
+
+const isValidNombreApellido = (texto) => {
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(texto);
+};
+
+const isValidEstado = (texto) => {
+  return /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/.test(texto);
 };
 
 // Endpoints
 app.get('/personas/:curp', (req, res) => {
   const curp = req.params.curp.toUpperCase();
   const db = readDB();
+  
+  if (!isValidCURP(curp)) {
+    return res.status(400).json({ 
+      success: false,
+      error: 'Formato de CURP inválido',
+      formato_esperado: '4 letras + 6 números + 8 caracteres alfanuméricos'
+    });
+  }
+
   const persona = db.find(p => p.curp === curp);
 
   if (!persona) {
-    return res.status(404).json({ error: 'Persona no encontrada' });
+    return res.status(404).json({ 
+      success: false,
+      error: 'Persona no encontrada' 
+    });
   }
-  res.json(persona);
+  
+  res.json({
+    success: true,
+    data: persona
+  });
 });
 
 app.post('/personas', (req, res) => {
   const { curp, nombre, apellido, estado } = req.body;
   const db = readDB();
 
-  // Validación básica
-  if (!curp || !nombre || !apellido || !estado) {
-    return res.status(400).json({ error: 'Faltan campos obligatorios' });
+  // Validación de campos obligatorios
+  const camposFaltantes = [];
+  if (!curp) camposFaltantes.push('curp');
+  if (!nombre) camposFaltantes.push('nombre');
+  if (!apellido) camposFaltantes.push('apellido');
+  if (!estado) camposFaltantes.push('estado');
+  
+  if (camposFaltantes.length > 0) {
+    return res.status(400).json({ 
+      success: false,
+      error: 'Faltan campos obligatorios',
+      campos_faltantes: camposFaltantes
+    });
   }
 
   const curpUpper = curp.toUpperCase();
   
+  // Validación formato CURP
+  if (!isValidCURP(curpUpper)) {
+    return res.status(400).json({ 
+      success: false,
+      error: 'Formato de CURP inválido',
+      curp_recibida: curp,
+      formato_esperado: '4 letras + 6 números + 8 caracteres alfanuméricos'
+    });
+  }
+
+  // Validación solo letras para nombre y apellido
+  if (!isValidNombreApellido(nombre)) {
+    return res.status(400).json({ 
+      success: false,
+      error: 'El nombre solo puede contener letras y espacios',
+      nombre_recibido: nombre
+    });
+  }
+
+  if (!isValidNombreApellido(apellido)) {
+    return res.status(400).json({ 
+      success: false,
+      error: 'El apellido solo puede contener letras y espacios',
+      apellido_recibido: apellido
+    });
+  }
+
+  // Validación solo letras para estado
+  if (!isValidEstado(estado)) {
+    return res.status(400).json({ 
+      success: false,
+      error: 'El estado solo puede contener letras y espacios',
+      estado_recibido: estado
+    });
+  }
+
+  // Verificar si la CURP ya existe
   if (db.some(p => p.curp === curpUpper)) {
-    return res.status(409).json({ error: 'La CURP ya existe' });
+    return res.status(409).json({ 
+      success: false,
+      error: 'La CURP ya está registrada',
+      curp: curpUpper
+    });
   }
 
   const nuevaPersona = {
@@ -76,16 +161,47 @@ app.post('/personas', (req, res) => {
   };
 
   db.push(nuevaPersona);
-  writeDB(db);
   
-  res.status(201).json(nuevaPersona);
+  if (!writeDB(db)) {
+    return res.status(500).json({
+      success: false,
+      error: 'Error al guardar en la base de datos'
+    });
+  }
+  
+  res.status(201).json({
+    success: true,
+    message: 'Persona registrada con éxito',
+    data: nuevaPersona
+  });
+});
+
+// Manejo de errores global
+app.use((err, req, res, next) => {
+  console.error('Error:', {
+    message: err.message,
+    stack: err.stack,
+    body: req.body,
+    url: req.originalUrl,
+    timestamp: new Date().toISOString()
+  });
+  
+  res.status(500).json({ 
+    success: false,
+    error: 'Error interno del servidor',
+    timestamp: new Date().toISOString()
+  });
 });
 
 // Iniciar servidor
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
-  console.log('Endpoints:');
-  console.log(`GET  /personas/:curp`);
-  console.log(`POST /personas`);
+  console.log('Endpoints disponibles:');
+  console.log(`GET  /personas/:curp - Buscar persona por CURP`);
+  console.log(`POST /personas - Registrar nueva persona`);
+  console.log('\nValidaciones implementadas:');
+  console.log('- Formato CURP: 4 letras + 6 números + 8 caracteres');
+  console.log('- Nombre/Apellido: Solo letras y espacios');
+  console.log('- Estado: Solo letras y espacios');
 });

@@ -1,35 +1,16 @@
 [
   {
-    "curp": "ABCD123456HDFXYZ01",
-    "nombre": "Juan",
-    "apellido": "Pérez",
-    "fechaNacimiento": "1990-01-01",
-    "estado": "Ciudad de México"
-  },
-  {
-    "curp": "PAMR000830HPLCJYA7",
-    "nombre": "reymon",
-    "apellido": "Pacheco Mejia"
-  },
-  {
-    "curp": "GODE920411HDFLRN01",
-    "nombre": "Juan",
-    "apellido": "perez",
-    "estado": "Ciudad de Mexico",
-    "fechaRegistro": "2025-04-21T23:50:16.136Z"
-  },
-  {
-    "curp": "PAMR111830HPLCJYA7",
-    "nombre": "Juana",
-    "apellido": "Peres galis",
-    "estado": "Oxaca",
-    "fechaRegistro": "2025-04-21T23:54:12.609Z"
-  },
-  {
-    "curp": "PAMR000830HPLCJYA9",
-    "nombre": "rey",
-    "apellido": "perez",
+    "curp": "PAMR000830HPLCJYYA7",
+    "nombre": "rtey",
+    "apellido": "pacheco",
     "estado": "hidalgo",
-    "fechaRegistro": "2025-04-22T04:55:03.775Z"
+    "fechaRegistro": "2025-04-22T05:23:05.527Z"
+  },
+  {
+    "curp": "PAMR000830HPLCJYYA0",
+    "nombre": "rtey5",
+    "apellido": "pacheco",
+    "estado": "hidalgo",
+    "fechaRegistro": "2025-04-22T05:23:20.281Z"
   }
 ]
