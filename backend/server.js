@@ -7,7 +7,7 @@ const app = express();
 // Configuración mejorada
 app.use(express.json());
 app.use(cors({
-  origin: ['http://127.0.0.1:8080', 'http://localhost:8080'],
+  origin: ['http://localhost:8080', 'http://192.168.0.6:8080'],
   methods: ['GET', 'POST', 'PUT', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
@@ -60,30 +60,44 @@ const isValidEstado = (texto) => {
 
 // Endpoints
 app.get('/personas/:curp', (req, res) => {
-  const curp = req.params.curp.toUpperCase();
-  const db = readDB();
-  
-  if (!isValidCURP(curp)) {
-    return res.status(400).json({ 
+  try {
+    const curp = req.params.curp.toUpperCase();
+    console.log(`Buscando CURP: ${curp}`); // Log para depuración
+    
+    const db = readDB();
+    console.log(`Base de datos contiene: ${db.length} registros`); // Log para depuración
+    
+    if (!isValidCURP(curp)) {
+      console.log('CURP inválida'); // Log para depuración
+      return res.status(400).json({ 
+        success: false,
+        error: 'Formato de CURP inválido',
+        formato_esperado: '4 letras + 6 números + 8 caracteres alfanuméricos'
+      });
+    }
+
+    const persona = db.find(p => p.curp === curp);
+    console.log('Resultado de búsqueda:', persona); // Log para depuración
+
+    if (!persona) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Persona no encontrada',
+        curp_buscada: curp
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: persona
+    });
+  } catch (error) {
+    console.error('Error en GET /personas/:curp:', error);
+    res.status(500).json({
       success: false,
-      error: 'Formato de CURP inválido',
-      formato_esperado: '4 letras + 6 números + 8 caracteres alfanuméricos'
+      error: 'Error interno al buscar persona'
     });
   }
-
-  const persona = db.find(p => p.curp === curp);
-
-  if (!persona) {
-    return res.status(404).json({ 
-      success: false,
-      error: 'Persona no encontrada' 
-    });
-  }
-  
-  res.json({
-    success: true,
-    data: persona
-  });
 });
 
 app.post('/personas', (req, res) => {
